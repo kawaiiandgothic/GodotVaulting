@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Threading;
 
 public partial class PlayerController : CharacterBody3D {
         [Export] public float speed = 3f;
@@ -38,27 +39,28 @@ public partial class PlayerController : CharacterBody3D {
                         // vault
                         if (vaultCheckLow.IsColliding() && !vaultCheckHigh.IsColliding()) {
                                 var collider = vaultCheckLow.GetCollider() as Node3D;
-                                GlobalPosition = vaultCheckLow.GetCollisionPoint() + new Vector3(0, 
-                                        collider.GlobalPosition.Y + 2, 
+                                if (collider.Rotation != Vector3.Zero)
+                                        goto jump;
+
+                                GlobalPosition = vaultCheckLow.GetCollisionPoint() + new Vector3(0,
+                                        collider.GlobalPosition.Z + 2,
                                         0);
                         }
 
-                        //jump
-                        else if (IsOnFloor()) {
-                                velocity.Y = jumpVelocity;
-                        }
+                        jump: velocity.Y = jumpVelocity;
                 }
 
+                // move
                 Vector2 inputDir = Input.GetVector("move_left", "move_right", "move_front", "move_back");
                 Vector3 direction = (head.GlobalTransform.Basis * new Vector3(inputDir.X, 0, inputDir.Y)).Normalized();
                 if (direction != Vector3.Zero) {
                         velocity.X = direction.X * speed;
                         velocity.Z = direction.Z * speed;
-                } else {
+                }
+                else {
                         velocity.X = Mathf.MoveToward(Velocity.X, 0, speed);
                         velocity.Z = Mathf.MoveToward(Velocity.Z, 0, speed);
                 }
-
                 Velocity = velocity;
                 MoveAndSlide();
         }
